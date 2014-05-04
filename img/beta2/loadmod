@@ -1,17 +1,6 @@
 #!/bin/bash
 rm hotplug.txt
-if [ -f /storage/o2b2update.tar.gz ];
-then
-# tar xzvf /storage/o2bupdate.tar.gz
- cat /storage/o2b2update.tar.gz | tar xzvf -
- rm /storage/o2b2update.tar.gz
-fi
-if [ -f /storage/o2b2update.sh ];
-then
- chmod +x /storage/o2b2update.sh
- /storage/o2b2update.sh > /storage/o2b2update.txt 2>&1
- rm /storage/o2b2update.sh
-fi
+ln -s /dev/bma150 /dev/kr3dm
 insmod /modules/param.ko
 insmod /modules/s3c_rotator.ko
 insmod /modules/s3c_mfc.ko
@@ -20,14 +9,26 @@ insmod /modules/s3c_pp.ko
 insmod /modules/s3c_jpeg.ko
 insmod /modules/s3c_g3d.ko
 insmod /modules/s3c_cmm.ko
-#insmod /modules/s3c_camera.ko
-#insmod /modules/vibrator.ko
+insmod /modules/s3c_camera.ko
+insmod /modules/vibrator.ko
 insmod /modules/Si4709_driver.ko
 insmod /modules/dpram.ko
 insmod /modules/multipdp.ko
+insmod /modules/zram.ko
+
 chmod +rw /dev/*
-ln -s /sd/Phone_I8000XXJA1.bin /dev/bml9
+ln -s /sd/modem.bin /dev/bml9
+
+#/tweak.sh
 efsd &
+start akmd2
+swapon -a
+
+#mount My Storage
+fat32ms=`parted /dev/block/mmcblk1 print|grep fat32|awk '{print $1}'`
+mount -t vfat /dev/block/mmcblk1p$fat32ms /storage -o iocharset=utf8
+exit
+
 sleep 25
 ipctool 07 00 00 00 01 01 03                    # IPC_GSM_PWR_PHONE_PWR_UP NOTI
 sleep 5
