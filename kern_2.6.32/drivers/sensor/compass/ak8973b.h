@@ -60,7 +60,7 @@
 #define ECS_IOCTL_INIT                  _IO(AKMIO, 0x01)
 #define ECS_IOCTL_WRITE                 _IOW(AKMIO, 0x02, char[5])
 #define ECS_IOCTL_READ                  _IOWR(AKMIO, 0x03, char[5])
-#define ECS_IOCTL_RESET      	          _IO(AKMIO, 0x04)
+#define ECS_IOCTL_RESET      	        _IO(AKMIO, 0x04)
 #define ECS_IOCTL_INT_STATUS            _IO(AKMIO, 0x05)
 #define ECS_IOCTL_FFD_STATUS            _IO(AKMIO, 0x06)
 #define ECS_IOCTL_SET_MODE              _IOW(AKMIO, 0x07, short)
