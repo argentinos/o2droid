@@ -200,13 +200,53 @@ static int powernow_k6_cpu_init(struct cpufreq_policy *policy)
 {
 	unsigned int i, f;
 	int result;
+	unsigned khz;
 
 	if (policy->cpu != 0)
 		return -ENODEV;
 
-	/* get frequencies */
-	max_multiplier = powernow_k6_get_cpu_multiplier();
-	busfreq = cpu_khz / max_multiplier;
+	max_multiplier = 0;
+	khz = cpu_khz;
+	for (i = 0; i < ARRAY_SIZE(usual_frequency_table); i++) {
+		if (khz >= usual_frequency_table[i].freq - FREQ_RANGE &&
+		    khz <= usual_frequency_table[i].freq + FREQ_RANGE) {
+			khz = usual_frequency_table[i].freq;
+			max_multiplier = usual_frequency_table[i].mult;
+			break;
+		}
+	}
+	if (param_max_multiplier) {
+		for (i = 0; (clock_ratio[i].frequency != CPUFREQ_TABLE_END); i++) {
+			if (clock_ratio[i].index == param_max_multiplier) {
+				max_multiplier = param_max_multiplier;
+				goto have_max_multiplier;
+			}
+		}
+		printk(KERN_ERR "powernow-k6: invalid max_multiplier parameter, valid parameters 20, 30, 35, 40, 45, 50, 55, 60\n");
+		return -EINVAL;
+	}
+	
+	if (!max_multiplier) {
+		printk(KERN_WARNING "powernow-k6: unknown frequency %u, cannot determine current multiplier\n", khz);
+		printk(KERN_WARNING "powernow-k6: use module parameters max_multiplier and bus_frequency\n");
+		return -EOPNOTSUPP;
+	}
+	
+have_max_multiplier:
+	param_max_multiplier = max_multiplier;
+	
+	if (param_busfreq) {
+		if (param_busfreq >= 50000 && param_busfreq <= 150000) {
+			busfreq = param_busfreq / 10;
+			goto have_busfreq;
+		}
+		printk(KERN_ERR "powernow-k6: invalid bus_frequency parameter, allowed range 50000 - 150000 kHz\n");
+		return -EINVAL;
+	}
+	
+	busfreq = khz / max_multiplier;
+have_busfreq:
+	param_busfreq = busfreq * 10; 
 
 	/* table init */
 	for (i = 0; (clock_ratio[i].frequency != CPUFREQ_TABLE_END); i++) {
@@ -218,7 +258,7 @@ static int powernow_k6_cpu_init(struct cpufreq_policy *policy)
 	}
 
 	/* cpuinfo and default policy values */
-	policy->cpuinfo.transition_latency = CPUFREQ_ETERNAL;
+	policy->cpuinfo.transition_latency = 500000;
 	policy->cur = busfreq * max_multiplier;
 
 	result = cpufreq_frequency_table_cpuinfo(policy, clock_ratio);
