@@ -39,6 +39,7 @@ static inline struct crypto_alg *crypto_alg_get(struct crypto_alg *alg)
 	atomic_inc(&alg->cra_refcnt);
 	return alg;
 }
+static struct crypto_alg *crypto_larval_wait(struct crypto_alg *alg);
 
 struct crypto_alg *crypto_mod_get(struct crypto_alg *alg)
 {
