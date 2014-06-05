@@ -58,7 +58,6 @@
 #endif
 	.endm
 
-
 @ VFP hardware support entry point.
 @
 @  r0  = faulted instruction
