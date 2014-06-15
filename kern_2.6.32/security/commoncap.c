@@ -27,6 +27,7 @@
 #include <linux/sched.h>
 #include <linux/prctl.h>
 #include <linux/securebits.h>
+#include <linux/personality.h>
 
 #ifdef CONFIG_ANDROID_PARANOID_NETWORK
 #include <linux/android_aid.h>
@@ -50,7 +51,7 @@ static void warn_setuid_and_fcaps_mixed(char *fname)
 		printk(KERN_INFO "warning: `%s' has both setuid-root and"
 			" effective capabilities. Therefore not raising all"
 			" capabilities.\n", fname);
-		warned = 1;
+		warned = 1;skip:
 	}
 }
 
@@ -520,6 +521,10 @@ int cap_bprm_set_creds(struct linux_binprm *bprm)
 			effective = true;
 	}
 skip:
+
+	/* if we have fs caps, clear dangerous personality flags */
+	if (!cap_issubset(new->cap_permitted, old->cap_permitted))
+		bprm->per_clear |= PER_CLEAR_ON_SETID; 
 
 	/* Don't let someone trace a set[ug]id/setpcap binary with the revised
 	 * credentials unless they have the appropriate permit
